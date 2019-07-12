@@ -1,7 +1,7 @@
 package com.xingray.mvp
 
 /**
- * xxx
+ * View的生命周期状态
  *
  * @author : leixing
  * @date : 2019/7/11 20:52
@@ -9,6 +9,7 @@ package com.xingray.mvp
  * mail : leixing1012@qq.com
  *
  */
+@Suppress("unused")
 enum class LifeCycle : Comparable<LifeCycle> {
     /**
      * 初始状态

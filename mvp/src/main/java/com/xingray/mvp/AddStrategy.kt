@@ -1,7 +1,7 @@
 package com.xingray.mvp
 
 /**
- * xxx
+ * 队列添加策略
  *
  * @author : leixing
  * @date : 2019/7/11 20:43
@@ -36,16 +36,17 @@ interface AddStrategy<E> {
         /**
          * 覆盖
          */
-        val OVERRIDE: AddStrategy<PresenterTask<*>> = object : AddStrategy<PresenterTask<*>> {
+        val OVERRIDE: AddStrategy<PresenterTask<*>> =
+            object : AddStrategy<PresenterTask<*>> {
 
-            override val strategyCode: Int
-                get() = CODE_OVERRIDE
+                override val strategyCode: Int
+                    get() = CODE_OVERRIDE
 
-            override fun addTask(list: MutableList<PresenterTask<*>>, e: PresenterTask<*>) {
-                list.remove(e)
-                list.add(e)
+                override fun addTask(list: MutableList<PresenterTask<*>>, e: PresenterTask<*>) {
+                    list.remove(e)
+                    list.add(e)
+                }
             }
-        }
 
 
         /**
@@ -81,6 +82,7 @@ interface AddStrategy<E> {
         /**
          * 头部插入
          */
+        @Suppress("unused")
         val INSERT_HEAD: AddStrategy<PresenterTask<*>> = object : AddStrategy<PresenterTask<*>> {
 
             override val strategyCode: Int

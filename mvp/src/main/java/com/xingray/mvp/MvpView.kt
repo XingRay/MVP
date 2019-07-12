@@ -1,7 +1,7 @@
 package com.xingray.mvp
 
 /**
- * xxx
+ * {@code View}的公共基础接口
  *
  * @author : leixing
  * @date : 2019/7/11 20:53

@@ -1,7 +1,7 @@
 package com.xingray.mvp
 
 /**
- * xxx
+ * View的声明周期观察者接口
  *
  * @author : leixing
  * @date : 2019/7/11 20:52

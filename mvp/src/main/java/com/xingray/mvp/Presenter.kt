@@ -16,49 +16,51 @@ import java.util.*
  */
 open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
 
-    private val mViewInterfaces: Array<Class<*>>?
-    private var mLifeCycle = LifeCycle.INIT
-    private var mTasks: MutableList<PresenterTask<V>>? = null
-    private var mViewProxies: HashMap<Long, V>? = null
-    private var mViewProxy: V? = null
+    private val viewInterfaces: Array<Class<*>>?
+    private var lifeCycle = LifeCycle.INIT
+    private val tasks: MutableList<PresenterTask<*>> by lazy { LinkedList<PresenterTask<*>>() }
+    private val viewProxies: HashMap<Long, V>  by lazy { HashMap<Long, V>(2) }
+    private var viewProxy: V? = null
 
-    internal var mView: V? = null
+    internal var targetView: V? = null
+
 
     /**
      * 获取视图对象
      *
      * @return 代理的视图对象
      */
+    @Suppress("UNCHECKED_CAST")
     protected val view: V
         get() {
-            if (mViewProxy == null) {
-                if (mViewInterfaces == null) {
-                    throw NullPointerException("must call setViewInterface to set mViewInterfaces")
-                }
-                mViewProxy = Proxy.newProxyInstance(javaClass.classLoader, mViewInterfaces,
-                    InvocationHandler { proxy, method, args ->
-                        if (mView != null) {
-                            try {
-                                method.invoke(mView, *args)
-                            } catch (e: IllegalAccessException) {
-                                e.printStackTrace()
-                            } catch (e: InvocationTargetException) {
-                                e.printStackTrace()
-                            }
-
-                            return@InvocationHandler null
-                        }
-
-                        val task = PresenterTask(this@Presenter, method, args, null!!)
-                        if (mTasks === null) {
-                            mTasks = LinkedList<PresenterTask<V>>()
-                        }
-                        mTasks!!.add(task)
-
-                        null
-                    }) as V
+            var proxy = viewProxy
+            if (proxy != null) {
+                return proxy
             }
-            return mViewProxy
+
+            val vi = viewInterfaces
+                ?: throw NullPointerException("must call setViewInterface to set viewInterfaces")
+            proxy = Proxy.newProxyInstance(javaClass.classLoader, vi,
+                InvocationHandler { _, method, args ->
+                    if (targetView != null) {
+                        try {
+                            method.invoke(targetView, *(args ?: arrayOfNulls(0)))
+                        } catch (e: IllegalAccessException) {
+                            e.printStackTrace()
+                        } catch (e: InvocationTargetException) {
+                            e.printStackTrace()
+                        }
+
+                        return@InvocationHandler null
+                    }
+
+                    val task = PresenterTask(this@Presenter, method, args, null)
+                    tasks.add(task)
+
+                    null
+                }) as V
+            viewProxy = proxy
+            return proxy
         }
 
     protected val resumeViewLast: V
@@ -71,77 +73,66 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         get() = runOnLifeCycles(AddStrategy.INSERT_TAIL, LifeCycle.RESUME)
 
     init {
-        mViewInterfaces = arrayOf(cls)
+        viewInterfaces = arrayOf(cls)
     }
 
-    protected fun runOnLifeCycles(lifeCycle: LifeCycle): V {
+    protected open fun runOnLifeCycles(lifeCycle: LifeCycle): V {
         return runOnLifeCycles(AddStrategy.INSERT_TAIL)
     }
 
-    protected fun runOnLifeCycles(strategy: AddStrategy<PresenterTask<V>>, lifeCycle: LifeCycle): V {
-        if (mViewProxies == null) {
-            mViewProxies = HashMap(2)
-        }
-
+    protected open fun runOnLifeCycles(strategy: AddStrategy<PresenterTask<*>>, lifeCycle: LifeCycle): V {
         val key = getProxyKey(strategy, lifeCycle)
-        var view: V? = mViewProxies!![key]
+        var view: V? = viewProxies[key]
         if (view == null) {
-            if (mViewInterfaces == null) {
-                throw NullPointerException("must call setViewInterface to set mViewInterfaces")
-            }
+            val vi = viewInterfaces
+                ?: throw NullPointerException("must call setViewInterface to set viewInterfaces")
 
+            @Suppress("UNCHECKED_CAST")
             view = Proxy.newProxyInstance(
-                javaClass.classLoader, mViewInterfaces,
+                javaClass.classLoader, vi,
                 createInvocationHandler(strategy, arrayOf(lifeCycle))
             ) as V
-            mViewProxies!![key] = view
+            viewProxies[key] = view
         }
         return view
     }
 
-    protected fun runOnLifeCycles(strategy: AddStrategy<PresenterTask<V>>, vararg lifeCycles: LifeCycle): V {
-        if (mViewProxies == null) {
-            mViewProxies = HashMap(2)
-        }
+    protected open fun runOnLifeCycles(strategy: AddStrategy<PresenterTask<*>>, vararg lifeCycles: LifeCycle): V {
+        val key = getProxyKey(strategy, *lifeCycles)
 
-        val key = getProxyKey(strategy, lifeCycles)
-
-        var view: V? = mViewProxies!![key]
+        var view: V? = viewProxies[key]
         if (view == null) {
-            if (mViewInterfaces == null) {
-                throw NullPointerException("must call setViewInterface to set mViewInterfaces")
-            }
+            val vi = viewInterfaces
+                ?: throw NullPointerException("must call setViewInterface to set viewInterfaces")
 
+            @Suppress("UNCHECKED_CAST")
             view = Proxy.newProxyInstance(
-                javaClass.classLoader, mViewInterfaces,
-                createInvocationHandler(strategy, lifeCycles)
+                javaClass.classLoader, vi,
+                createInvocationHandler(strategy, lifeCycles as Array<LifeCycle>)
             ) as V
-            mViewProxies!![key] = view
+            viewProxies[key] = view
         }
         return view
     }
 
     private fun createInvocationHandler(
-        strategy: AddStrategy<PresenterTask<V>>,
+        strategy: AddStrategy<PresenterTask<*>>,
         lifeCycles: Array<LifeCycle>
     ): InvocationHandler {
-        return InvocationHandler { proxy, method, args ->
-            if (mView != null && Util.contains(lifeCycles, mLifeCycle)) {
-                method.invoke(mView, *args)
+        return InvocationHandler { _, method, args ->
+            if (targetView != null && Util.contains(lifeCycles, lifeCycle)) {
+                method.invoke(targetView, *(args ?: arrayOfNulls(0)))
                 return@InvocationHandler null
             }
 
             val task = PresenterTask(this@Presenter, method, args, lifeCycles)
-            if (mTasks == null) {
-                mTasks = LinkedList()
-            }
-            strategy.addTask(mTasks!!, task)
+            strategy.addTask(tasks, task)
 
             null
         }
     }
 
-    protected fun getProxyKey(strategy: AddStrategy<*>, lifeCycles: Array<LifeCycle>): Long {
+    protected open fun getProxyKey(strategy: AddStrategy<*>, vararg lifeCycles: LifeCycle/*: Array<LifeCycle>*/): Long {
         var key = strategy.hashCode().toLong()
         for (lifeCycle in lifeCycles) {
             key += (1 shl lifeCycle.ordinal).toLong()
@@ -149,36 +140,32 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         return key
     }
 
-    protected fun getProxyKey(strategy: AddStrategy<*>, lifeCycle: LifeCycle): Long {
+    protected open fun getProxyKey(strategy: AddStrategy<*>, lifeCycle: LifeCycle): Long {
         var key = strategy.hashCode().toLong()
         key += (1 shl lifeCycle.ordinal).toLong()
         return key
     }
 
     override fun bindView(view: V) {
-        mView = view
+        targetView = view
         updateLifeCycle(view.lifeCycle)
         addLifeCycleObserver(view)
         executeTasks()
     }
 
     private fun updateLifeCycle(lifeCycle: LifeCycle) {
-        mLifeCycle = lifeCycle
-        if (mLifeCycle === LifeCycle.DESTROY) {
+        this.lifeCycle = lifeCycle
+        if (this.lifeCycle === LifeCycle.DESTROY) {
             onViewDestroy()
         }
     }
 
-    protected fun onViewDestroy() {
-        mView = null
-        if (mTasks != null) {
-            mTasks!!.clear()
-        }
+    protected open fun onViewDestroy() {
+        this.targetView = null
+        tasks.clear()
 
-        mViewProxy = null
-        if (mViewProxies != null) {
-            mViewProxies!!.clear()
-        }
+        viewProxy = null
+        viewProxies.clear()
     }
 
     private fun addLifeCycleObserver(lifeCycleProvider: LifeCycleProvider) {
@@ -191,15 +178,15 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
     }
 
     private fun executeTasks() {
-        if (mView == null || mTasks == null || mTasks!!.isEmpty()) {
+        if (targetView == null || tasks.isEmpty()) {
             return
         }
 
-        val iterator = mTasks!!.iterator()
+        val iterator = tasks.iterator()
         while (iterator.hasNext()) {
             val task = iterator.next()
-            val lifeCycles = task.getLifeCycles()
-            if (lifeCycles == null || Util.contains(lifeCycles, mLifeCycle)) {
+            val lifeCycles = task.lifeCycles
+            if (lifeCycles == null || Util.contains(lifeCycles, lifeCycle)) {
                 task.run()
                 iterator.remove()
             }

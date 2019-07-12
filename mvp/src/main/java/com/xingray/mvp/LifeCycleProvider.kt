@@ -1,7 +1,7 @@
 package com.xingray.mvp
 
 /**
- * xxx
+ * View的生命周期提供者的接口
  *
  * @author : leixing
  * @date : 2019/7/11 20:53
@@ -13,7 +13,7 @@ interface LifeCycleProvider {
 
 
     /**
-     * 获取当前的生命周期状态
+     * View当前的生命周期状态
      *
      * @return 生命周期状态
      */

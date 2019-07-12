@@ -1,0 +1,18 @@
+<FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="480dp"
+        android:layout_height="120dp"
+        android:background="#333"
+        tools:ignore="RtlHardcoded,HardcodedText">
+
+    <TextView
+            android:id="@+id/tv_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="加载中"
+            android:textColor="#fff"
+            android:textSize="24sp"/>
+
+</FrameLayout>
