@@ -9,7 +9,7 @@ import java.util.*
  *
  * @author : leixing
  * @version : 1.0.0
- * mail : leixing@baidu.com
+ * mail : leixing1012@qq.com
  * @date : 2019/7/10 20:01
  */
 class MainPresenter internal constructor() : Presenter<MainContract.View>(MainContract.View::class.java),

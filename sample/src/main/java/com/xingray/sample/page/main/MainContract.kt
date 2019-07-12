@@ -8,7 +8,7 @@ import com.xingray.mvp.MvpView
  *
  * @author : leixing
  * @version : 1.0.0
- * mail : leixing@baidu.com
+ * mail : leixing1012@qq.com
  * @date : 2019/7/10 20:00
  */
 interface MainContract {

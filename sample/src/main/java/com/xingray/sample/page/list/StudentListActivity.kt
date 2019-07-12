@@ -18,7 +18,7 @@ import com.xingray.sample.ui.ViewUtil
  *
  * @author : leixing
  * @version : 1.0.0
- * mail : leixing@baidu.com
+ * mail : leixing1012@qq.com
  * @date : 2019/7/11 11:38
  */
 class StudentListActivity : BaseMvpActivity<StudentListContract.Presenter>(), StudentListContract.View {
