@@ -20,6 +20,11 @@ interface LifeCycleProvider {
     val lifeCycle: LifeCycle
 
     /**
+     * 通知[LifeCycle]已经变化
+     */
+    fun notifyLifeCycleChanged(lifeCycle: LifeCycle)
+
+    /**
      * 添加生命周期观察者
      *
      * @param observer 生命周期观察者
@@ -32,5 +37,4 @@ interface LifeCycleProvider {
      * @param observer 生命周期观察者
      */
     fun removeLifeCycleObserver(observer: LifeCycleObserver)
-
 }

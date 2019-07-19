@@ -7,6 +7,7 @@ import com.xingray.sample.R
 import com.xingray.sample.base.BaseMvpActivity
 import com.xingray.sample.page.list.StudentListActivity
 import com.xingray.sample.ui.ProgressDialog
+import java.util.ArrayList
 
 /**
  * @author leixing
@@ -49,7 +50,7 @@ class MainActivity : BaseMvpActivity<MainContract.Presenter>(), MainContract.Vie
 
     private fun initList() {
         val list = rvList ?: return
-        list.layoutManager = LinearLayoutManager(mContext)
+        list.layoutManager = LinearLayoutManager(applicationContext)
 
         mAdapter = RecyclerAdapter(applicationContext)
             .typeSupport(Test::class.java)
@@ -61,9 +62,19 @@ class MainActivity : BaseMvpActivity<MainContract.Presenter>(), MainContract.Vie
         list.adapter = mAdapter
     }
 
+    private fun loadTestList(): List<Test> {
+        val testList = ArrayList<Test>()
+
+        testList.add(Test("student list test", "1"))
+
+        return testList
+    }
+
     private fun gotoTestPage(test: Test) {
         when (test.id) {
             "1" -> StudentListActivity.start(this)
         }
     }
+
+
 }

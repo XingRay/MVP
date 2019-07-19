@@ -16,15 +16,17 @@ import java.util.concurrent.CopyOnWriteArrayList
  * mail : leixing1012@qq.com
  *
  */
-class PresenterHolder<P> : LifeCycleProvider, LifeCycleObserver, MvpView<P> {
+class PresenterHolder<P> : LifeCycleProvider, MvpView<P> {
 
-    private val lifeCycleObservers: CopyOnWriteArrayList<LifeCycleObserver>
-            by lazy { CopyOnWriteArrayList<LifeCycleObserver>() }
     private var mPresenter: P? = null
     private var mPresenterInterfaces: Array<Class<*>>? = null
     private var mPresenterProxy: P? = null
-    private val mTasks: LinkedList<Runnable>  by lazy { LinkedList<Runnable>() }
-    override var lifeCycle = LifeCycle.INIT
+    private val mTasks by lazy { LinkedList<Runnable>() }
+    private var mLifeCycle = LifeCycle.INIT
+    private val mLifeCycleObservers by lazy { CopyOnWriteArrayList<LifeCycleObserver>() }
+
+    override val lifeCycle: LifeCycle
+        get() = mLifeCycle
 
     @Suppress("UNCHECKED_CAST")
     override val presenter: P
@@ -74,18 +76,15 @@ class PresenterHolder<P> : LifeCycleProvider, LifeCycleObserver, MvpView<P> {
     }
 
     override fun addLifeCycleObserver(observer: LifeCycleObserver) {
-        lifeCycleObservers.add(observer)
+        mLifeCycleObservers.add(observer)
     }
 
     override fun removeLifeCycleObserver(observer: LifeCycleObserver) {
-        lifeCycleObservers.remove(observer)
+        mLifeCycleObservers.remove(observer)
     }
 
     override fun notifyLifeCycleChanged(lifeCycle: LifeCycle) {
-        this.lifeCycle = lifeCycle
-        for (observer in lifeCycleObservers) {
-            observer.notifyLifeCycleChanged(lifeCycle)
-        }
+        mLifeCycleObservers.forEach { it.onLifeCycleChanged(mLifeCycle) }
     }
 
     override fun bindPresenter(p: P) {

@@ -13,9 +13,9 @@ interface MvpView<P> : LifeCycleProvider {
 
     val presenter: P
 
+    fun bindPresenter(p: P)
+
     fun setPresenterInterface(cls: Class<P>)
 
     fun hasPresenter(): Boolean
-
-    fun bindPresenter(p: P)
 }

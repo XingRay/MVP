@@ -66,13 +66,13 @@ class StudentListActivity : BaseMvpActivity<StudentListContract.Presenter>(), St
 
     private fun initList() {
         val list = rvList ?: return
-        list.layoutManager = LinearLayoutManager(mContext)
+        list.layoutManager = LinearLayoutManager(applicationContext)
 
         mAdapter = RecyclerAdapter(applicationContext)
             .typeSupport(Student::class.java)
             .layoutViewSupport(R.layout.item_student_list)
             .viewHolder(StudentViewHolder::class.java)
-            .itemClickListener { _, _, student -> ViewUtil.showToast(mContext, student.name) }
+            .itemClickListener { _, _, student -> ViewUtil.showToast(applicationContext, student.name) }
             .registerView().registerType()
 
         list.adapter = mAdapter

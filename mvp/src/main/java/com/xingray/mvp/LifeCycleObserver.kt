@@ -10,5 +10,8 @@ package com.xingray.mvp
  *
  */
 interface LifeCycleObserver {
-    fun notifyLifeCycleChanged(lifeCycle: LifeCycle)
+    /**
+     * [LifeCycle] 变化时回调
+     */
+    fun onLifeCycleChanged(lifeCycle: LifeCycle)
 }

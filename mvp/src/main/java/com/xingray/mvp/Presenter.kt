@@ -1,5 +1,6 @@
 package com.xingray.mvp
 
+import android.util.LongSparseArray
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Proxy
@@ -19,7 +20,7 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
     private val viewInterfaces: Array<Class<*>>?
     private var lifeCycle = LifeCycle.INIT
     private val tasks: MutableList<PresenterTask<*>> by lazy { LinkedList<PresenterTask<*>>() }
-    private val viewProxies: HashMap<Long, V>  by lazy { HashMap<Long, V>(2) }
+    private val viewProxies: LongSparseArray<V>  by lazy { LongSparseArray<V>(2) }
     private var viewProxy: V? = null
 
     internal var targetView: V? = null
@@ -92,7 +93,7 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
                 javaClass.classLoader, vi,
                 createInvocationHandler(strategy, arrayOf(lifeCycle))
             ) as V
-            viewProxies[key] = view
+            viewProxies.put(key, view)
         }
         return view
     }
@@ -110,7 +111,7 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
                 javaClass.classLoader, vi,
                 createInvocationHandler(strategy, lifeCycles as Array<LifeCycle>)
             ) as V
-            viewProxies[key] = view
+            viewProxies.put(key, view)
         }
         return view
     }
@@ -170,7 +171,7 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
 
     private fun addLifeCycleObserver(lifeCycleProvider: LifeCycleProvider) {
         lifeCycleProvider.addLifeCycleObserver(object : LifeCycleObserver {
-            override fun notifyLifeCycleChanged(lifeCycle: LifeCycle) {
+            override fun onLifeCycleChanged(lifeCycle: LifeCycle) {
                 updateLifeCycle(lifeCycle)
                 executeTasks()
             }
