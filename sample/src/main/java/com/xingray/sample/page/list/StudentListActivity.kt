@@ -3,13 +3,12 @@ package com.xingray.sample.page.list
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.xingray.recycleradapter.RecyclerAdapter
 import com.xingray.sample.R
-import com.xingray.sample.base.BaseMvpActivity
+import com.xingray.sample.base.MvpActivity
 import com.xingray.sample.data.Student
 import com.xingray.sample.ui.ProgressDialog
 import com.xingray.sample.ui.ViewUtil
@@ -22,7 +21,7 @@ import com.xingray.sample.ui.ViewUtil
  * mail : leixing1012@qq.com
  * @date : 2019/7/11 11:38
  */
-class StudentListActivity : BaseMvpActivity<StudentListContract.Presenter>(), StudentListContract.View {
+class StudentListActivity : MvpActivity<StudentListContract.Presenter>(), StudentListContract.View {
 
     companion object {
 

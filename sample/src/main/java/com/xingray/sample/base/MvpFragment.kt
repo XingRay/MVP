@@ -7,19 +7,18 @@ import com.xingray.mvp.MvpView
 import com.xingray.mvp.PresenterHolder
 
 /**
- *  `MVP`模式的`Activity`基类.
+ * MVP 模式的 Fragment 基类
  *
  * @author : leixing
- * @date : 2017-04-14
+ * @date : 2017-04-20
  * Email       : leixing1012@qq.com
  * Version     : 0.0.1
  *
  */
 
-@Suppress("UNUSED_PARAMETER")
-abstract class BaseMvpActivity<P> : BaseActivity(), MvpView<P> {
+abstract class MvpFragment<P> : BaseFragment(), MvpView<P> {
 
-    private val mPresenterHolder = PresenterHolder<P>()
+    private var mPresenterHolder = PresenterHolder<P>()
 
     override val presenter: P
         get() = mPresenterHolder.presenter

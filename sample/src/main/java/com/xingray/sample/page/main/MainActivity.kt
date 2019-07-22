@@ -4,7 +4,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.xingray.recycleradapter.RecyclerAdapter
 import com.xingray.sample.R
-import com.xingray.sample.base.BaseMvpActivity
+import com.xingray.sample.base.MvpActivity
 import com.xingray.sample.page.list.StudentListActivity
 import com.xingray.sample.ui.ProgressDialog
 import java.util.*
@@ -12,7 +12,7 @@ import java.util.*
 /**
  * @author leixing
  */
-class MainActivity : BaseMvpActivity<MainContract.Presenter>(), MainContract.View {
+class MainActivity : MvpActivity<MainContract.Presenter>(), MainContract.View {
 
     private var rvList: RecyclerView? = null
     private var mAdapter: RecyclerAdapter? = null
