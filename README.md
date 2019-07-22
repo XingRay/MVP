@@ -23,10 +23,12 @@ allprojects {
 
 ### Step 2. Add the dependency
 
+[![MVP](https://jitpack.io/v/XingRay/MVP.svg)](https://jitpack.io/#XingRay/MVP)
+
 ```groovy
 
 dependencies {
-    implementation 'com.github.XingRay:MVP:1.0.0'
+    implementation 'com.github.XingRay:MVP:1.0.1'
 }
 
 ```
