@@ -8,7 +8,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * xxx
+ * 持有 Presenter 的引用，用于在 View 中可以调用 Presenter 的方法而不会有空指针的问题
  *
  * @author : leixing
  * @date : 2019/7/11 20:54
@@ -39,27 +39,7 @@ class PresenterHolder<P> : LifeCycleProvider, MvpView<P> {
             return if (p == null) {
                 val presenterInterface = mPresenterInterfaces
                     ?: throw NullPointerException("must call setPresenterInterface to set mPresenterInterfaces")
-                p =
-                    Proxy.newProxyInstance(javaClass.classLoader, presenterInterface, object : InvocationHandler {
-                        override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
-                            method ?: throw NullPointerException("")
-                            if (mPresenter != null) {
-                                method.invoke(mPresenter, *(args ?: arrayOfNulls(0)))
-                                return null
-                            }
-                            mTasks.add(Runnable {
-                                val taskPresenter = mPresenter ?: throw NullPointerException()
-                                try {
-                                    method.invoke(taskPresenter, *(args ?: arrayOfNulls(0)))
-                                } catch (e: IllegalAccessException) {
-                                    e.printStackTrace()
-                                } catch (e: InvocationTargetException) {
-                                    e.printStackTrace()
-                                }
-                            })
-                            return null
-                        }
-                    }) as P
+                p = createProxy(presenterInterface)
                 mPresenterProxy = p
                 p
             } else {
@@ -84,6 +64,7 @@ class PresenterHolder<P> : LifeCycleProvider, MvpView<P> {
     }
 
     override fun notifyLifeCycleChanged(lifeCycle: LifeCycle) {
+        mLifeCycle = lifeCycle
         mLifeCycleObservers.forEach { it.onLifeCycleChanged(mLifeCycle) }
     }
 
@@ -103,5 +84,29 @@ class PresenterHolder<P> : LifeCycleProvider, MvpView<P> {
             runnable.run()
             iterator.remove()
         }
+    }
+
+    private fun createProxy(presenterInterface: Array<Class<*>>): P {
+        @Suppress("UNCHECKED_CAST")
+        return Proxy.newProxyInstance(javaClass.classLoader, presenterInterface, object : InvocationHandler {
+            override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
+                method ?: throw NullPointerException()
+                if (mPresenter != null) {
+                    method.invoke(mPresenter, *(args ?: arrayOfNulls(0)))
+                    return null
+                }
+                mTasks.add(Runnable {
+                    val taskPresenter = mPresenter ?: throw NullPointerException()
+                    try {
+                        method.invoke(taskPresenter, *(args ?: arrayOfNulls(0)))
+                    } catch (e: IllegalAccessException) {
+                        e.printStackTrace()
+                    } catch (e: InvocationTargetException) {
+                        e.printStackTrace()
+                    }
+                })
+                return null
+            }
+        }) as P
     }
 }

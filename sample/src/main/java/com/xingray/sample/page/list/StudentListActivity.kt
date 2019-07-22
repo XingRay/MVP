@@ -3,6 +3,7 @@ package com.xingray.sample.page.list
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,6 +23,19 @@ import com.xingray.sample.ui.ViewUtil
  * @date : 2019/7/11 11:38
  */
 class StudentListActivity : BaseMvpActivity<StudentListContract.Presenter>(), StudentListContract.View {
+
+    companion object {
+
+        private val TAG = StudentListActivity::class.java.simpleName
+
+        fun start(context: Context) {
+            val starter = Intent(context, StudentListActivity::class.java)
+            if (context !is Activity) {
+                starter.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(starter)
+        }
+    }
 
     private var rvList: RecyclerView? = null
     private var mPresenter: StudentListPresenter? = null
@@ -43,7 +57,9 @@ class StudentListActivity : BaseMvpActivity<StudentListContract.Presenter>(), St
             mPresenter = p
         }
 
-        findViewById<View>(R.id.bt_stop).setOnClickListener { presenter.onStop() }
+        findViewById<View>(R.id.bt_stop).setOnClickListener {
+            presenter.onStop()
+        }
 
         initList()
     }
@@ -69,27 +85,14 @@ class StudentListActivity : BaseMvpActivity<StudentListContract.Presenter>(), St
         list.layoutManager = LinearLayoutManager(applicationContext)
 
         mAdapter = RecyclerAdapter(applicationContext)
-            .typeSupport(Student::class.java)
-            .layoutViewSupport(R.layout.item_student_list)
-            .viewHolder(StudentViewHolder::class.java)
-            .itemClickListener { _, _, student -> ViewUtil.showToast(applicationContext, student.name) }
-            .registerView().registerType()
+            .addType(StudentViewHolder::class.java, null) { _, _, student ->
+                ViewUtil.showToast(applicationContext, student.name)
+            }
 
         list.adapter = mAdapter
     }
 
     override fun scrollTo(position: Int) {
         rvList?.scrollToPosition(position)
-    }
-
-    companion object {
-
-        fun start(context: Context) {
-            val starter = Intent(context, StudentListActivity::class.java)
-            if (context !is Activity) {
-                starter.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(starter)
-        }
     }
 }

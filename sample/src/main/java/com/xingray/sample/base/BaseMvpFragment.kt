@@ -7,7 +7,7 @@ import com.xingray.mvp.MvpView
 import com.xingray.mvp.PresenterHolder
 
 /**
- * `MVP`模式的`Fragment`基类
+ * MVP 模式的 Fragment 基类
  *
  * @author : leixing
  * @date : 2017-04-20

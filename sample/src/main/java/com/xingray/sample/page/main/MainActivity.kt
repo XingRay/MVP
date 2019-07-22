@@ -7,7 +7,7 @@ import com.xingray.sample.R
 import com.xingray.sample.base.BaseMvpActivity
 import com.xingray.sample.page.list.StudentListActivity
 import com.xingray.sample.ui.ProgressDialog
-import java.util.ArrayList
+import java.util.*
 
 /**
  * @author leixing
@@ -53,11 +53,9 @@ class MainActivity : BaseMvpActivity<MainContract.Presenter>(), MainContract.Vie
         list.layoutManager = LinearLayoutManager(applicationContext)
 
         mAdapter = RecyclerAdapter(applicationContext)
-            .typeSupport(Test::class.java)
-            .layoutViewSupport(R.layout.item_test_list)
-            .viewHolder(TestViewHolder::class.java)
-            .itemClickListener { _, _, test -> gotoTestPage(test) }
-            .registerView().registerType()
+            .addType(TestViewHolder::class.java, null) { _, _, test ->
+                gotoTestPage(test)
+            }
 
         list.adapter = mAdapter
     }

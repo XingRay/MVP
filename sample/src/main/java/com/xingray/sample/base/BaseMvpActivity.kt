@@ -67,17 +67,17 @@ abstract class BaseMvpActivity<P> : BaseActivity(), MvpView<P> {
     }
 
     override fun onPause() {
-        super.onPause()
         mPresenterHolder.notifyLifeCycleChanged(LifeCycle.PAUSE)
+        super.onPause()
     }
 
     override fun onStop() {
-        super.onStop()
         mPresenterHolder.notifyLifeCycleChanged(LifeCycle.STOP)
+        super.onStop()
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         mPresenterHolder.notifyLifeCycleChanged(LifeCycle.DESTROY)
+        super.onDestroy()
     }
 }

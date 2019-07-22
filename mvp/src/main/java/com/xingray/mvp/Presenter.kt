@@ -7,7 +7,8 @@ import java.lang.reflect.Proxy
 import java.util.*
 
 /**
- * xxx
+ * MVP模式中的 Presenter 基类， 可以在指定 View 的方法的执行的时机
+ * 同时解决了 View 的空指针和泄漏问题
  *
  * @author : leixing
  * @date : 2019/7/11 20:54
@@ -19,8 +20,8 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
 
     private val viewInterfaces: Array<Class<*>>?
     private var lifeCycle = LifeCycle.INIT
-    private val tasks: MutableList<PresenterTask<*>> by lazy { LinkedList<PresenterTask<*>>() }
-    private val viewProxies: LongSparseArray<V>  by lazy { LongSparseArray<V>(2) }
+    private val tasks by lazy { LinkedList<PresenterTask<*>>() }
+    private val viewProxies by lazy { LongSparseArray<V>(2) }
     private var viewProxy: V? = null
 
     internal var targetView: V? = null
@@ -41,25 +42,7 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
 
             val vi = viewInterfaces
                 ?: throw NullPointerException("must call setViewInterface to set viewInterfaces")
-            proxy = Proxy.newProxyInstance(javaClass.classLoader, vi,
-                InvocationHandler { _, method, args ->
-                    if (targetView != null) {
-                        try {
-                            method.invoke(targetView, *(args ?: arrayOfNulls(0)))
-                        } catch (e: IllegalAccessException) {
-                            e.printStackTrace()
-                        } catch (e: InvocationTargetException) {
-                            e.printStackTrace()
-                        }
-
-                        return@InvocationHandler null
-                    }
-
-                    val task = PresenterTask(this@Presenter, method, args, null)
-                    tasks.add(task)
-
-                    null
-                }) as V
+            proxy = createProxy(vi)
             viewProxy = proxy
             return proxy
         }
@@ -121,7 +104,7 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         lifeCycles: Array<LifeCycle>
     ): InvocationHandler {
         return InvocationHandler { _, method, args ->
-            if (targetView != null && Util.contains(lifeCycles, lifeCycle)) {
+            if (targetView != null && lifeCycles.contains(lifeCycle)) {
                 method.invoke(targetView, *(args ?: arrayOfNulls(0)))
                 return@InvocationHandler null
             }
@@ -187,10 +170,32 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         while (iterator.hasNext()) {
             val task = iterator.next()
             val lifeCycles = task.lifeCycles
-            if (lifeCycles == null || Util.contains(lifeCycles, lifeCycle)) {
+            if (lifeCycles == null || lifeCycles.contains(lifeCycle)) {
                 task.run()
                 iterator.remove()
             }
         }
+    }
+
+    private fun createProxy(vi: Array<Class<*>>): V {
+        @Suppress("UNCHECKED_CAST")
+        return Proxy.newProxyInstance(javaClass.classLoader, vi, InvocationHandler { _, method, args ->
+            if (targetView != null) {
+                try {
+                    method.invoke(targetView, *(args ?: arrayOfNulls(0)))
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
+                } catch (e: InvocationTargetException) {
+                    e.printStackTrace()
+                }
+
+                return@InvocationHandler null
+            }
+
+            val task = PresenterTask(this@Presenter, method, args, null)
+            tasks.add(task)
+
+            null
+        }) as V
     }
 }
