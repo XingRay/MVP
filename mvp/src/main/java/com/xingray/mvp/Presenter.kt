@@ -21,6 +21,7 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
     private val viewInterfaces: Array<Class<*>>?
     private var lifeCycle = LifeCycle.INIT
     private val tasks by lazy { LinkedList<PresenterTask<*>>() }
+    private val lifeCycleTasks by lazy { LinkedList<LifeCycleTask>() }
     private val viewProxies by lazy { LongSparseArray<V>(2) }
     private var viewProxy: V? = null
 
@@ -48,23 +49,23 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         }
 
     protected val resumeViewLast: V
-        get() = runOnLifeCycles(AddStrategy.OVERRIDE, LifeCycle.RESUME)
+        get() = getLifeCyclesView(AddStrategy.OVERRIDE, LifeCycle.RESUME)
 
     protected val resumeViewOnce: V
-        get() = runOnLifeCycles(AddStrategy.ADD_IF_NOT_EXIST, LifeCycle.RESUME)
+        get() = getLifeCyclesView(AddStrategy.ADD_IF_NOT_EXIST, LifeCycle.RESUME)
 
     protected val resumeView: V
-        get() = runOnLifeCycles(AddStrategy.INSERT_TAIL, LifeCycle.RESUME)
+        get() = getLifeCyclesView(AddStrategy.INSERT_TAIL, LifeCycle.RESUME)
 
     init {
         viewInterfaces = arrayOf(cls)
     }
 
-    protected open fun runOnLifeCycles(lifeCycle: LifeCycle): V {
-        return runOnLifeCycles(AddStrategy.INSERT_TAIL)
+    protected fun getLifeCycleView(lifeCycle: LifeCycle): V {
+        return getLifeCyclesView(AddStrategy.INSERT_TAIL)
     }
 
-    protected open fun runOnLifeCycles(strategy: AddStrategy<PresenterTask<*>>, lifeCycle: LifeCycle): V {
+    protected fun getLifeCycleView(strategy: AddStrategy<PresenterTask<*>>, lifeCycle: LifeCycle): V {
         val key = getProxyKey(strategy, lifeCycle)
         var view: V? = viewProxies[key]
         if (view == null) {
@@ -81,7 +82,8 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         return view
     }
 
-    protected open fun runOnLifeCycles(strategy: AddStrategy<PresenterTask<*>>, vararg lifeCycles: LifeCycle): V {
+    @Suppress("MemberVisibilityCanBePrivate")
+    protected fun getLifeCyclesView(strategy: AddStrategy<PresenterTask<*>>, vararg lifeCycles: LifeCycle): V {
         val key = getProxyKey(strategy, *lifeCycles)
 
         var view: V? = viewProxies[key]
@@ -97,6 +99,28 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
             viewProxies.put(key, view)
         }
         return view
+    }
+
+    protected fun runOnLifeCycle(lifeCycle: LifeCycle, task: Runnable) {
+        runOnLifeCycles(arrayOf(lifeCycle), task::run)
+    }
+
+    protected fun runOnLifeCycle(lifeCycle: LifeCycle, task: () -> Unit) {
+        runOnLifeCycles(arrayOf(lifeCycle), task)
+    }
+
+    protected fun runOnLifeCycles(lifeCycles: Array<LifeCycle>, task: Runnable) {
+        runOnLifeCycles(lifeCycles, task::run)
+    }
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    protected fun runOnLifeCycles(lifeCycles: Array<LifeCycle>, task: () -> Unit) {
+        if (lifeCycles.contains(lifeCycle)) {
+            task.invoke()
+            return
+        }
+
+        lifeCycleTasks.add(LifeCycleTask(lifeCycles, task))
     }
 
     private fun createInvocationHandler(
@@ -132,13 +156,19 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
 
     override fun bindView(view: V) {
         targetView = view
-        updateLifeCycle(view.lifeCycle)
         addLifeCycleObserver(view)
-        executeTasks()
+        updateLifeCycle(view.lifeCycle)
     }
 
     private fun updateLifeCycle(lifeCycle: LifeCycle) {
+        if (lifeCycle === this.lifeCycle) {
+            return
+        }
+
         this.lifeCycle = lifeCycle
+        executeTasks()
+        executeLifeCycleTasks()
+
         if (this.lifeCycle === LifeCycle.DESTROY) {
             onViewDestroy()
         }
@@ -156,7 +186,6 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         lifeCycleProvider.addLifeCycleObserver(object : LifeCycleObserver {
             override fun onLifeCycleChanged(lifeCycle: LifeCycle) {
                 updateLifeCycle(lifeCycle)
-                executeTasks()
             }
         })
     }
@@ -167,11 +196,30 @@ open class Presenter<V : LifeCycleProvider>(cls: Class<V>) : MvpPresenter<V> {
         }
 
         val iterator = tasks.iterator()
+        val lifeCycle = this.lifeCycle
+
         while (iterator.hasNext()) {
             val task = iterator.next()
             val lifeCycles = task.lifeCycles
             if (lifeCycles == null || lifeCycles.contains(lifeCycle)) {
                 task.run()
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun executeLifeCycleTasks() {
+        if (lifeCycleTasks.isEmpty()) {
+            return
+        }
+
+        val iterator = lifeCycleTasks.iterator()
+        val lifeCycle = this.lifeCycle
+
+        while (iterator.hasNext()) {
+            val task = iterator.next()
+            if (task.lifeCycles.contains(lifeCycle)) {
+                task.task.invoke()
                 iterator.remove()
             }
         }

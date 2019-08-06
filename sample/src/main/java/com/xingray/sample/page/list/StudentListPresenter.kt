@@ -38,6 +38,6 @@ class StudentListPresenter internal constructor() :
     }
 
     override fun onStop() {
-        runOnLifeCycles(AddStrategy.INSERT_TAIL, LifeCycle.STOP).scrollTo(0)
+        getLifeCyclesView(AddStrategy.INSERT_TAIL, LifeCycle.STOP).scrollTo(0)
     }
 }

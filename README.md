@@ -28,7 +28,7 @@ allprojects {
 ```groovy
 
 dependencies {
-    implementation 'com.github.XingRay:MVP:1.0.1'
+    implementation 'com.github.XingRay:MVP:1.1.0'
 }
 
 ```
@@ -37,7 +37,11 @@ dependencies {
 
 ```kotlin
 
-runOnLifeCycles(AddStrategy.INSERT_TAIL, LifeCycle.STOP).scrollTo(0)
+getLifeCycleView(AddStrategy.INSERT_TAIL, LifeCycle.STOP).scrollTo(0)
+
+runOnLifeCycle(LifeCycle.STOP){
+    // do something
+}
 
 ```
 
